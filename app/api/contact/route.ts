@@ -54,11 +54,10 @@ export async function POST(request: NextRequest) {
       message: "Message sent successfully.",
       data,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Unexpected error in /api/contact:", err);
-    return NextResponse.json(
-      { error: err.message || "An unexpected error occurred." },
-      { status: 500 }
-    );
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred.";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

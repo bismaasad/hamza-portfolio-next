@@ -12,7 +12,6 @@ import {
   Trash2,
   ExternalLink,
   Search,
-  Filter,
   Clock,
   User,
   Inbox,
@@ -329,10 +328,11 @@ export default function AdminMessagesPage() {
         isOpen={deleteModalOpen}
         title="Delete Message"
         message={`Are you sure you want to permanently delete the message from "${selectedMessage?.name}" (${selectedMessage?.email})?`}
-        confirmLabel={isDeleting ? "Deleting..." : "Delete"}
-        isDestructive={true}
+        confirmText="Delete"
+        isDanger={true}
+        loading={isDeleting}
         onConfirm={handleDelete}
-        onCancel={() => {
+        onClose={() => {
           setDeleteModalOpen(false);
           setSelectedMessage(null);
         }}

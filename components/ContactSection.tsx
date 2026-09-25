@@ -116,9 +116,13 @@ export default function ContactSection({ data, showHeader = true }: ContactSecti
         subject: "",
         message: "",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error submitting contact message:", err);
-      setSubmitError(err?.message || "Failed to deliver message. Please contact via direct email.");
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to deliver message. Please contact via direct email.";
+      setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -16,7 +16,6 @@ import {
   X,
   MessageSquare,
   Clock,
-  User,
 } from "lucide-react";
 
 export function AdminNotifications() {
