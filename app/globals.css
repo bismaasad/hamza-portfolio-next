@@ -89,3 +89,27 @@ body::before {
 .glow-cyan {
   box-shadow: 0 0 30px -5px rgba(6, 182, 212, 0.3);
 }
+
+/* Urdu & Arabic Typography */
+.font-urdu {
+  font-family: var(--font-urdu), var(--font-arabic), "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", "Noto Naskh Arabic", serif;
+  line-height: 2.2;
+}
+
+.font-urdu-naskh {
+  font-family: var(--font-arabic), var(--font-urdu), "Noto Naskh Arabic", "Segoe UI", sans-serif;
+  line-height: 1.85;
+}
+
+[dir="rtl"],
+.dir-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="ltr"],
+.dir-ltr {
+  direction: ltr;
+  text-align: left;
+}
+

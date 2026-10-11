@@ -71,6 +71,8 @@ export default function AdminPublicationsPage() {
     fetchPublications();
   }, [fetchPublications]);
 
+  const [filterType, setFilterType] = useState<"All" | "Journal" | "Conference">("All");
+
   function openCreateModal() {
     setEditingItem({
       title: "",
@@ -79,13 +81,17 @@ export default function AdminPublicationsPage() {
       image_url: "",
       publisher: "",
       year: "",
+      publication_type: "Journal",
       order_index: items.length + 1,
     });
     setIsModalOpen(true);
   }
 
   function openEditModal(item: PublicationItem) {
-    setEditingItem({ ...item });
+    setEditingItem({
+      ...item,
+      publication_type: item.publication_type || "Journal",
+    });
     setIsModalOpen(true);
   }
 
@@ -113,6 +119,7 @@ export default function AdminPublicationsPage() {
             image_url: editingItem.image_url?.trim() || null,
             publisher: editingItem.publisher?.trim() || null,
             year: editingItem.year?.trim() || null,
+            publication_type: editingItem.publication_type?.trim() || "Journal",
             order_index: Number(editingItem.order_index) || 0,
           })
           .eq("id", editingItem.id);
@@ -129,6 +136,7 @@ export default function AdminPublicationsPage() {
             image_url: editingItem.image_url?.trim() || null,
             publisher: editingItem.publisher?.trim() || null,
             year: editingItem.year?.trim() || null,
+            publication_type: editingItem.publication_type?.trim() || "Journal",
             order_index: Number(editingItem.order_index) || 0,
           },
         ]);
@@ -177,11 +185,17 @@ export default function AdminPublicationsPage() {
     }
   }
 
+  const displayedItems = items.filter((item) => {
+    if (filterType === "All") return true;
+    const isConf = (item.publication_type || "").trim().toLowerCase() === "conference";
+    return filterType === "Conference" ? isConf : !isConf;
+  });
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Publications"
-        description="Manage your research papers, articles, written tutorials, and published works."
+        description="Manage your research papers, journal articles, and conference proceedings."
         badge="public.publications"
         icon={BookOpen}
         iconColor="from-pink-500 to-rose-600"
@@ -207,6 +221,23 @@ export default function AdminPublicationsPage() {
           </div>
         }
       />
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2">
+        {(["All", "Journal", "Conference"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setFilterType(t)}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              filterType === t
+                ? "bg-neutral-100 text-neutral-950 font-semibold shadow-sm"
+                : "bg-neutral-900/80 text-neutral-400 hover:text-white border border-neutral-800"
+            }`}
+          >
+            {t === "All" ? `All (${items.length})` : t === "Journal" ? `Journals (${items.filter(i => (i.publication_type || '').trim().toLowerCase() !== 'conference').length})` : `Conferences (${items.filter(i => (i.publication_type || '').trim().toLowerCase() === 'conference').length})`}
+          </button>
+        ))}
+      </div>
 
       {successMsg && (
         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-3 animate-in fade-in">
@@ -237,7 +268,7 @@ export default function AdminPublicationsPage() {
               No publications yet
             </h3>
             <p className="text-xs text-neutral-400 mt-1">
-              Share research papers, blog posts, or journal articles.
+              Share research papers, journal articles, or conference proceedings.
             </p>
           </div>
           <button
@@ -248,91 +279,108 @@ export default function AdminPublicationsPage() {
             <span>Add Publication</span>
           </button>
         </div>
+      ) : displayedItems.length === 0 ? (
+        <div className="p-12 text-center rounded-2xl bg-neutral-900/40 border border-neutral-800">
+          <p className="text-xs text-neutral-400">No {filterType.toLowerCase()} publications found.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-2xl bg-neutral-900/70 border border-neutral-800 p-5 shadow-lg flex flex-col justify-between hover:border-neutral-700 transition-all space-y-4"
-            >
-              <div>
-                {item.image_url && (
-                  <div className="relative w-full h-36 rounded-xl overflow-hidden mb-3 border border-neutral-800 bg-neutral-950">
-                    <Image
-                      src={item.image_url}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
-                )}
-
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <h3 className="font-bold text-white text-base leading-snug">
-                    {item.title}
-                  </h3>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      onClick={() => openEditModal(item)}
-                      className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(item)}
-                      className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-400 mb-2">
-                  {item.publisher && (
-                    <div className="flex items-center gap-1 text-pink-400 font-medium">
-                      <Globe className="w-3.5 h-3.5" />
-                      <span>{item.publisher}</span>
+          {displayedItems.map((item) => {
+            const isConf = (item.publication_type || "").trim().toLowerCase() === "conference";
+            return (
+              <div
+                key={item.id}
+                className="rounded-2xl bg-neutral-900/70 border border-neutral-800 p-5 shadow-lg flex flex-col justify-between hover:border-neutral-700 transition-all space-y-4"
+              >
+                <div>
+                  {item.image_url && (
+                    <div className="relative w-full h-36 rounded-xl overflow-hidden mb-3 border border-neutral-800 bg-neutral-950">
+                      <Image
+                        src={item.image_url}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
                     </div>
                   )}
-                  {item.year && (
-                    <div className="flex items-center gap-1 text-neutral-400">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>{item.year}</span>
+
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="font-bold text-white text-base leading-snug">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => openEditModal(item)}
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(item)}
+                        className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5 text-xs text-neutral-400 mb-2">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
+                        isConf
+                          ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
+                          : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                      }`}
+                    >
+                      {isConf ? "Conference" : "Journal"}
+                    </span>
+
+                    {item.publisher && (
+                      <div className="flex items-center gap-1 text-pink-400 font-medium">
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>{item.publisher}</span>
+                      </div>
+                    )}
+                    {item.year && (
+                      <div className="flex items-center gap-1 text-neutral-400">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{item.year}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {item.description && (
+                    <p className="text-xs text-neutral-300 leading-relaxed line-clamp-3">
+                      {item.description}
+                    </p>
+                  )}
+
+                  {item.link && (
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 hover:underline mt-2 font-medium"
+                    >
+                      <span>Read Publication</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   )}
                 </div>
 
-                {item.description && (
-                  <p className="text-xs text-neutral-300 leading-relaxed line-clamp-3">
-                    {item.description}
-                  </p>
-                )}
-
-                {item.link && (
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 hover:underline mt-2 font-medium"
-                  >
-                    <span>Read Publication</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
+                <div className="pt-3 border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-500">
+                  <span className="flex items-center gap-1">
+                    <Layers className="w-3 h-3" />
+                    <span>Order: {item.order_index}</span>
+                  </span>
+                  <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                </div>
               </div>
-
-              <div className="pt-3 border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-500">
-                <span className="flex items-center gap-1">
-                  <Layers className="w-3 h-3" />
-                  <span>Order: {item.order_index}</span>
-                </span>
-                <span>{new Date(item.created_at).toLocaleDateString()}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -370,15 +418,38 @@ export default function AdminPublicationsPage() {
                 />
               </div>
 
-              {/* Publisher & Year Grid */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Publication Type, Publisher & Year Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-neutral-300">
+                    Publication Type <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    value={editingItem.publication_type || "Journal"}
+                    onChange={(e) =>
+                      setEditingItem({
+                        ...editingItem,
+                        publication_type: e.target.value,
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-950/70 border border-neutral-800 text-white text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+                  >
+                    <option value="Journal" className="bg-neutral-900 text-white">
+                      Journal
+                    </option>
+                    <option value="Conference" className="bg-neutral-900 text-white">
+                      Conference
+                    </option>
+                  </select>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-neutral-300">
                     Publisher / Journal
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. IEEE / Medium / Tech Journal"
+                    placeholder="e.g. IEEE / Springer"
                     value={editingItem.publisher || ""}
                     onChange={(e) =>
                       setEditingItem({

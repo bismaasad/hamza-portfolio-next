@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS public.publications (
     image_url TEXT,
     publisher TEXT,
     year TEXT,
+    publication_type TEXT DEFAULT 'Journal',
     order_index INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -127,6 +128,31 @@ CREATE TABLE IF NOT EXISTS public.contact_messages (
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Table 10: Thesis Supervision (PhD, MS/MPhil, BS Students)
+CREATE TABLE IF NOT EXISTS public.thesis_supervision (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_name TEXT NOT NULL,
+    registration_number TEXT,
+    thesis_title TEXT NOT NULL,
+    degree_level TEXT NOT NULL DEFAULT 'MS or MPhil',
+    supervision_role TEXT NOT NULL DEFAULT 'Supervisor',
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Table 11: Administrative Responsibilities & Roles
+CREATE TABLE IF NOT EXISTS public.administrative_roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    position TEXT NOT NULL,
+    start_date TEXT,
+    end_date TEXT,
+    responsibilities TEXT,
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- ==============================================================================
 -- AUTOMATIC UPDATED_AT TRIGGERS
 -- ==============================================================================
@@ -158,6 +184,12 @@ CREATE TRIGGER set_updated_at_admin_users BEFORE UPDATE ON public.admin_users FO
 DROP TRIGGER IF EXISTS set_updated_at_contact_messages ON public.contact_messages;
 CREATE TRIGGER set_updated_at_contact_messages BEFORE UPDATE ON public.contact_messages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_thesis_supervision ON public.thesis_supervision;
+CREATE TRIGGER set_updated_at_thesis_supervision BEFORE UPDATE ON public.thesis_supervision FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS set_updated_at_administrative_roles ON public.administrative_roles;
+CREATE TRIGGER set_updated_at_administrative_roles BEFORE UPDATE ON public.administrative_roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ==============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
@@ -172,6 +204,8 @@ ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_info ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.thesis_supervision ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.administrative_roles ENABLE ROW LEVEL SECURITY;
 
 -- 1. Public Read (SELECT) Policies for portfolio content
 CREATE POLICY "Allow public read access for hero" ON public.hero FOR SELECT USING (true);
@@ -181,6 +215,8 @@ CREATE POLICY "Allow public read access for experience" ON public.experience FOR
 CREATE POLICY "Allow public read access for publications" ON public.publications FOR SELECT USING (true);
 CREATE POLICY "Allow public read access for gallery" ON public.gallery FOR SELECT USING (true);
 CREATE POLICY "Allow public read access for contact_info" ON public.contact_info FOR SELECT USING (true);
+CREATE POLICY "Allow public read access for thesis_supervision" ON public.thesis_supervision FOR SELECT USING (true);
+CREATE POLICY "Allow public read access for administrative_roles" ON public.administrative_roles FOR SELECT USING (true);
 
 -- 2. Public Insert Policy for Contact Messages
 CREATE POLICY "Allow public insert on contact_messages" ON public.contact_messages FOR INSERT TO public, anon, authenticated WITH CHECK (true);
@@ -195,6 +231,8 @@ CREATE POLICY "Allow full access for authenticated users on gallery" ON public.g
 CREATE POLICY "Allow full access for authenticated users on contact_info" ON public.contact_info FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Allow full access for authenticated users on admin_users" ON public.admin_users FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Allow full access for authenticated users on contact_messages" ON public.contact_messages FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access for authenticated users on thesis_supervision" ON public.thesis_supervision FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access for authenticated users on administrative_roles" ON public.administrative_roles FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ==============================================================================
 -- INITIAL SEED DATA (OPTIONAL STARTER CONTENT)
@@ -282,4 +320,76 @@ CREATE POLICY "Allow All Deletes on portfolio-images"
 ON storage.objects FOR DELETE
 TO public, anon, authenticated
 USING (bucket_id = 'portfolio-images');
+
+-- ==============================================================================
+-- 10. Achievements Table, Triggers & RLS Policies
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.achievements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    description TEXT,
+    year TEXT,
+    image_url TEXT,
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Trigger for updated_at
+DROP TRIGGER IF EXISTS set_updated_at_achievements ON public.achievements;
+CREATE TRIGGER set_updated_at_achievements 
+BEFORE UPDATE ON public.achievements 
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable RLS
+ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
+
+-- Public Read (SELECT) Policy
+DROP POLICY IF EXISTS "Allow public read access for achievements" ON public.achievements;
+CREATE POLICY "Allow public read access for achievements" 
+ON public.achievements FOR SELECT USING (true);
+
+-- Authenticated Admin Full Access Policy
+DROP POLICY IF EXISTS "Allow full access for authenticated users on achievements" ON public.achievements;
+CREATE POLICY "Allow full access for authenticated users on achievements" 
+ON public.achievements FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- ==============================================================================
+-- 11. Newspaper Articles Table, Triggers & RLS Policies
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.newspaper_articles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    newspaper_name TEXT NOT NULL,
+    publish_date TEXT,
+    author_byline TEXT,
+    image_url TEXT,
+    article_text TEXT,
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Trigger for updated_at
+DROP TRIGGER IF EXISTS set_updated_at_newspaper_articles ON public.newspaper_articles;
+CREATE TRIGGER set_updated_at_newspaper_articles 
+BEFORE UPDATE ON public.newspaper_articles 
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable RLS
+ALTER TABLE public.newspaper_articles ENABLE ROW LEVEL SECURITY;
+
+-- Public Read (SELECT) Policy
+DROP POLICY IF EXISTS "Allow public read access for newspaper_articles" ON public.newspaper_articles;
+CREATE POLICY "Allow public read access for newspaper_articles" 
+ON public.newspaper_articles FOR SELECT USING (true);
+
+-- Authenticated Admin Full Access Policy
+DROP POLICY IF EXISTS "Allow full access for authenticated users on newspaper_articles" ON public.newspaper_articles;
+CREATE POLICY "Allow full access for authenticated users on newspaper_articles" 
+ON public.newspaper_articles FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+
 

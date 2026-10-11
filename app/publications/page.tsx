@@ -11,7 +11,7 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Publications | Dr. Hamza Khan",
-  description: "Peer-reviewed research articles and journal papers published in Fluid Dynamics, PLOS ONE, Chiang Mai Journal of Sciences, and Springer.",
+  description: "Peer-reviewed research articles and conference papers published in Fluid Dynamics, PLOS ONE, Chiang Mai Journal of Sciences, and Springer.",
 };
 
 export default async function PublicationsPage() {
@@ -22,7 +22,7 @@ export default async function PublicationsPage() {
     const [pubRes, heroRes] = await Promise.all([
       supabase
         .from("publications")
-        .select("id, title, description, link, image_url, publisher, year, order_index")
+        .select("id, title, description, link, image_url, publisher, year, publication_type, order_index")
         .order("order_index", { ascending: true }),
       supabase
         .from("hero")
@@ -47,7 +47,7 @@ export default async function PublicationsPage() {
       <main className="flex-1 pb-16">
         <PageHeader
           title="Research Publications"
-          subtitle={`A comprehensive archive of ${publicationItems.length || 24}+ peer-reviewed journal papers and computational modeling studies.`}
+          subtitle={`A comprehensive archive of ${publicationItems.length || 24}+ peer-reviewed journal papers and conference publications.`}
           badge="International Research Papers"
           iconType="publications"
           badgeColor="text-emerald-400 bg-emerald-500/10 border-emerald-500/20"

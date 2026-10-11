@@ -9,6 +9,7 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
+  Presentation,
 } from "lucide-react";
 import { FadeIn, StaggerContainer, StaggerItem, HoverCard } from "@/components/MotionWrappers";
 
@@ -17,13 +18,83 @@ interface PublicationsSectionProps {
   showHeader?: boolean;
 }
 
+function PublicationCard({
+  pub,
+  isConference = false,
+}: {
+  pub: PublicationItem;
+  isConference?: boolean;
+}) {
+  return (
+    <HoverCard className="h-full rounded-2xl p-6 glass-card bg-slate-900/50 border border-white/5 flex flex-col justify-between group hover:border-indigo-500/40 transition-all">
+      <div className="space-y-4">
+        {/* Top Metadata: Year & Publisher */}
+        <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+          {pub.year ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-semibold font-mono">
+              <Calendar className="w-3 h-3" />
+              {pub.year}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 font-mono">
+              Published
+            </span>
+          )}
+
+          {pub.publisher && (
+            <span className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-cyan-300 text-[11px] font-medium truncate max-w-[180px]">
+              {pub.publisher}
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-300 transition-colors leading-snug line-clamp-3">
+          {pub.title}
+        </h3>
+
+        {/* Description / Abstract snippet if available */}
+        {pub.description && (
+          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+            {pub.description}
+          </p>
+        )}
+      </div>
+
+      {/* Footer Action */}
+      <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+        <span className="text-[11px] text-slate-500 font-medium">
+          {isConference ? "Conference Paper" : "Peer-Reviewed Paper"}
+        </span>
+
+        {pub.link ? (
+          <a
+            href={pub.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600/80 hover:bg-indigo-600 border border-indigo-500/40 shadow-sm transition-all hover:scale-[1.03]"
+          >
+            <span>Read Paper</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        ) : (
+          <span className="text-xs text-slate-500 italic">
+            {isConference ? "Conference Article" : "Journal Article"}
+          </span>
+        )}
+      </div>
+    </HoverCard>
+  );
+}
+
 export default function PublicationsSection({
   items,
   showHeader = true,
 }: PublicationsSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPublisher, setSelectedPublisher] = useState<string>("All");
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [visibleJournalsCount, setVisibleJournalsCount] = useState(12);
+  const [visibleConferencesCount, setVisibleConferencesCount] = useState(12);
 
   // Extract unique publishers
   const publishers = useMemo(() => {
@@ -34,14 +105,16 @@ export default function PublicationsSection({
     return ["All", ...Array.from(set)];
   }, [items]);
 
-  // Filter items
+  // Filter items based on search and publisher
   const filteredItems = useMemo(() => {
     return items.filter((pub) => {
       const matchSearch =
         pub.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (pub.publisher &&
           pub.publisher.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (pub.year && pub.year.includes(searchQuery));
+        (pub.year && pub.year.includes(searchQuery)) ||
+        (pub.description &&
+          pub.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchPublisher =
         selectedPublisher === "All" ||
@@ -51,7 +124,23 @@ export default function PublicationsSection({
     });
   }, [items, searchQuery, selectedPublisher]);
 
-  const visibleList = filteredItems.slice(0, visibleCount);
+  // Split into Journal and Conference publications
+  const journalItems = useMemo(() => {
+    return filteredItems.filter(
+      (pub) =>
+        (pub.publication_type || "").trim().toLowerCase() !== "conference"
+    );
+  }, [filteredItems]);
+
+  const conferenceItems = useMemo(() => {
+    return filteredItems.filter(
+      (pub) =>
+        (pub.publication_type || "").trim().toLowerCase() === "conference"
+    );
+  }, [filteredItems]);
+
+  const visibleJournalList = journalItems.slice(0, visibleJournalsCount);
+  const visibleConferenceList = conferenceItems.slice(0, visibleConferencesCount);
 
   return (
     <section id="publications" className="py-12 relative">
@@ -67,7 +156,7 @@ export default function PublicationsSection({
                 Research Publications ({items.length})
               </h2>
               <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-                International journal publications spanning Computational Fluid Dynamics, Adaptive Control Theory, and Mathematical Modeling.
+                International journal publications and conference proceedings spanning Computational Fluid Dynamics, Adaptive Control Theory, and Mathematical Modeling.
               </p>
             </div>
           </FadeIn>
@@ -75,7 +164,7 @@ export default function PublicationsSection({
 
         {/* Search & Filter Bar */}
         <FadeIn delay={0.1} direction="up">
-          <div className="glass-panel p-4 rounded-2xl mb-8 flex flex-col md:flex-row items-center justify-between gap-4 border border-white/10">
+          <div className="glass-panel p-4 rounded-2xl mb-12 flex flex-col md:flex-row items-center justify-between gap-4 border border-white/10">
             {/* Search Input */}
             <div className="relative w-full md:w-96">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -83,7 +172,7 @@ export default function PublicationsSection({
               </div>
               <input
                 type="text"
-                placeholder="Search by title, journal, or year..."
+                placeholder="Search by title, publisher, or year..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
@@ -109,103 +198,172 @@ export default function PublicationsSection({
           </div>
         </FadeIn>
 
-        {/* Publications Grid */}
-        {visibleList.length === 0 ? (
+        {/* Global Empty State */}
+        {filteredItems.length === 0 ? (
           <div className="p-12 text-center rounded-2xl bg-slate-900/30 border border-slate-800">
             <BookOpen className="w-8 h-8 text-slate-600 mx-auto mb-2" />
             <p className="text-sm text-slate-400">No publications matched your search criteria.</p>
           </div>
         ) : (
-          <StaggerContainer
-            staggerDelay={0.06}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {visibleList.map((pub, idx) => (
-              <StaggerItem key={pub.id || idx}>
-                <HoverCard className="h-full rounded-2xl p-6 glass-card bg-slate-900/50 border border-white/5 flex flex-col justify-between group hover:border-indigo-500/40 transition-all">
-                  <div className="space-y-4">
-                    {/* Top Metadata: Year & Publisher */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
-                      {pub.year ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-semibold font-mono">
-                          <Calendar className="w-3 h-3" />
-                          {pub.year}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 font-mono">
-                          Published
-                        </span>
-                      )}
-
-                      {pub.publisher && (
-                        <span className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-cyan-300 text-[11px] font-medium truncate max-w-[180px]">
-                          {pub.publisher}
-                        </span>
-                      )}
+          <div className="space-y-16">
+            {/* ========================================================= */}
+            {/* SECTION 1: JOURNAL PUBLICATIONS                          */}
+            {/* ========================================================= */}
+            <div className="space-y-8">
+              {/* Journal Heading */}
+              <FadeIn direction="up">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      <BookOpen className="w-5 h-5" />
                     </div>
-
-                    {/* Title */}
-                    <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-indigo-300 transition-colors leading-snug line-clamp-3">
-                      {pub.title}
-                    </h3>
-
-                    {/* Description / Abstract snippet if available */}
-                    {pub.description && (
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                        {pub.description}
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
+                        Journal Publications
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold font-mono">
+                          {journalItems.length}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Peer-reviewed research articles published in indexed international scientific journals.
                       </p>
-                    )}
+                    </div>
                   </div>
+                </div>
+              </FadeIn>
 
-                  {/* Footer Action */}
-                  <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      Peer-Reviewed Paper
-                    </span>
-
-                    {pub.link ? (
-                      <a
-                        href={pub.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600/80 hover:bg-indigo-600 border border-indigo-500/40 shadow-sm transition-all hover:scale-[1.03]"
-                      >
-                        <span>Read Paper</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    ) : (
-                      <span className="text-xs text-slate-500 italic">Journal Article</span>
-                    )}
-                  </div>
-                </HoverCard>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        )}
-
-        {/* View More / View Less Button */}
-        {filteredItems.length > 12 && (
-          <FadeIn delay={0.2} direction="up">
-            <div className="mt-10 text-center">
-              {visibleCount < filteredItems.length ? (
-                <button
-                  onClick={() => setVisibleCount((prev) => Math.min(prev + 12, filteredItems.length))}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 shadow-lg transition-all cursor-pointer hover:border-slate-600"
-                >
-                  <span>Show More Publications ({filteredItems.length - visibleCount} remaining)</span>
-                  <ChevronDown className="w-4 h-4 text-indigo-400" />
-                </button>
+              {/* Journal Grid / Empty State */}
+              {journalItems.length === 0 ? (
+                <div className="p-8 text-center rounded-2xl bg-slate-900/20 border border-slate-800/60">
+                  <p className="text-xs text-slate-400">No journal publications found matching your filter.</p>
+                </div>
               ) : (
-                <button
-                  onClick={() => setVisibleCount(12)}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 shadow-lg transition-all cursor-pointer"
-                >
-                  <span>Collapse List</span>
-                  <ChevronUp className="w-4 h-4 text-indigo-400" />
-                </button>
+                <>
+                  <StaggerContainer
+                    staggerDelay={0.06}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  >
+                    {visibleJournalList.map((pub, idx) => (
+                      <StaggerItem key={pub.id || idx}>
+                        <PublicationCard pub={pub} isConference={false} />
+                      </StaggerItem>
+                    ))}
+                  </StaggerContainer>
+
+                  {/* Journal Show More */}
+                  {journalItems.length > 12 && (
+                    <FadeIn delay={0.2} direction="up">
+                      <div className="mt-8 text-center">
+                        {visibleJournalsCount < journalItems.length ? (
+                          <button
+                            onClick={() =>
+                              setVisibleJournalsCount((prev) =>
+                                Math.min(prev + 12, journalItems.length)
+                              )
+                            }
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 shadow-lg transition-all cursor-pointer hover:border-slate-600"
+                          >
+                            <span>
+                              Show More Journal Publications (
+                              {journalItems.length - visibleJournalsCount} remaining)
+                            </span>
+                            <ChevronDown className="w-4 h-4 text-emerald-400" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setVisibleJournalsCount(12)}
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 shadow-lg transition-all cursor-pointer"
+                          >
+                            <span>Collapse Journal List</span>
+                            <ChevronUp className="w-4 h-4 text-emerald-400" />
+                          </button>
+                        )}
+                      </div>
+                    </FadeIn>
+                  )}
+                </>
               )}
             </div>
-          </FadeIn>
+
+            {/* ========================================================= */}
+            {/* SECTION 2: CONFERENCE PUBLICATIONS                       */}
+            {/* ========================================================= */}
+            <div className="space-y-8 pt-4">
+              {/* Conference Heading */}
+              <FadeIn direction="up">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                      <Presentation className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
+                        Conference Publications
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold font-mono">
+                          {conferenceItems.length}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Research papers presented and published in international academic conference proceedings.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </FadeIn>
+
+              {/* Conference Grid / Empty State */}
+              {conferenceItems.length === 0 ? (
+                <div className="p-8 text-center rounded-2xl bg-slate-900/20 border border-slate-800/60">
+                  <p className="text-xs text-slate-400">No conference publications found matching your filter.</p>
+                </div>
+              ) : (
+                <>
+                  <StaggerContainer
+                    staggerDelay={0.06}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  >
+                    {visibleConferenceList.map((pub, idx) => (
+                      <StaggerItem key={pub.id || idx}>
+                        <PublicationCard pub={pub} isConference={true} />
+                      </StaggerItem>
+                    ))}
+                  </StaggerContainer>
+
+                  {/* Conference Show More */}
+                  {conferenceItems.length > 12 && (
+                    <FadeIn delay={0.2} direction="up">
+                      <div className="mt-8 text-center">
+                        {visibleConferencesCount < conferenceItems.length ? (
+                          <button
+                            onClick={() =>
+                              setVisibleConferencesCount((prev) =>
+                                Math.min(prev + 12, conferenceItems.length)
+                              )
+                            }
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 shadow-lg transition-all cursor-pointer hover:border-slate-600"
+                          >
+                            <span>
+                              Show More Conference Publications (
+                              {conferenceItems.length - visibleConferencesCount} remaining)
+                            </span>
+                            <ChevronDown className="w-4 h-4 text-indigo-400" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setVisibleConferencesCount(12)}
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 shadow-lg transition-all cursor-pointer"
+                          >
+                            <span>Collapse Conference List</span>
+                            <ChevronUp className="w-4 h-4 text-indigo-400" />
+                          </button>
+                        )}
+                      </div>
+                    </FadeIn>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </section>

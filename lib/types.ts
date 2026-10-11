@@ -47,9 +47,37 @@ export interface PublicationItem {
   image_url?: string | null;
   publisher?: string | null;
   year?: string | null;
+  publication_type?: string | null;
   order_index: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface ThesisSupervisionItem {
+  id: string;
+  student_name: string;
+  registration_number?: string | null;
+  reg_no?: string | null;
+  thesis_title: string;
+  degree_level: string;
+  supervision_role?: string | null;
+  role?: string | null;
+  co_supervisor_name?: string | null;
+  year?: string | null;
+  order_index?: number | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AdministrativeRoleItem {
+  id: string;
+  position: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  responsibilities?: string | null;
+  order_index?: number | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface GalleryItem {
@@ -94,4 +122,30 @@ export interface ContactMessage {
   created_at: string;
   updated_at?: string;
 }
+
+export interface AchievementItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  year?: string | null;
+  image_url?: string | null;
+  order_index: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface NewspaperArticleItem {
+  id: string;
+  title: string;
+  newspaper_name: string;
+  publish_date?: string | null;
+  author_byline?: string | null;
+  image_url?: string | null;
+  article_text?: string | null;
+  order_index: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+
 

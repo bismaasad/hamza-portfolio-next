@@ -21,6 +21,9 @@ import {
   X,
   Loader2,
   MessageSquare,
+  Users,
+  Award,
+  Newspaper,
 } from "lucide-react";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
@@ -85,6 +88,10 @@ export default function AdminLayout({
     { name: "Education", href: "/admin/education", icon: GraduationCap },
     { name: "Experience", href: "/admin/experience", icon: Briefcase },
     { name: "Publications", href: "/admin/publications", icon: BookOpen },
+    { name: "Thesis Supervision", href: "/admin/thesis-supervision", icon: Users },
+    { name: "Administrative Roles", href: "/admin/administrative-roles", icon: ShieldCheck },
+    { name: "Achievements", href: "/admin/achievements", icon: Award },
+    { name: "Newspaper Articles", href: "/admin/newspaper-articles", icon: Newspaper },
     { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
     { name: "Contact Info", href: "/admin/contact", icon: Mail },
   ];

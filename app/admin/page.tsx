@@ -11,6 +11,10 @@ import {
   Database,
   Layers,
   MessageSquare,
+  Users,
+  ShieldCheck,
+  Award,
+  Newspaper,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +74,38 @@ export default function AdminDashboardPage() {
       table: "publications",
     },
     {
+      title: "Thesis Supervision",
+      description: "Manage PhD, MS / MPhil, and BS student thesis supervision records.",
+      href: "/admin/thesis-supervision",
+      icon: Users,
+      color: "from-teal-500 to-emerald-600",
+      table: "thesis_supervision",
+    },
+    {
+      title: "Administrative Roles",
+      description: "Manage university administrative duties, advisory positions, and officer appointments.",
+      href: "/admin/administrative-roles",
+      icon: ShieldCheck,
+      color: "from-sky-500 to-blue-600",
+      table: "administrative_roles",
+    },
+    {
+      title: "Achievements",
+      description: "Manage awards, merit scholarships, doctoral distinctions, and certificates.",
+      href: "/admin/achievements",
+      icon: Award,
+      color: "from-amber-500 to-yellow-600",
+      table: "achievements",
+    },
+    {
+      title: "Newspaper Articles",
+      description: "Manage scanned newspaper clippings, Urdu op-eds, and columns.",
+      href: "/admin/newspaper-articles",
+      icon: Newspaper,
+      color: "from-rose-500 to-pink-600",
+      table: "newspaper_articles",
+    },
+    {
       title: "Gallery",
       description: "Curate project showcase images, photography, and captions.",
       href: "/admin/gallery",
@@ -117,7 +153,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex items-center gap-2 text-xs text-neutral-400">
           <Layers className="w-4 h-4" />
-          <span>8 Tables</span>
+          <span>12 Tables</span>
         </div>
       </div>
 

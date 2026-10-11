@@ -11,6 +11,10 @@ import {
   BookOpen,
   Image as ImageIcon,
   Mail,
+  Users,
+  ShieldCheck,
+  Award,
+  Newspaper,
 } from "lucide-react";
 import { FadeIn } from "@/components/MotionWrappers";
 
@@ -20,7 +24,11 @@ export type IconType =
   | "experience"
   | "publications"
   | "gallery"
-  | "contact";
+  | "contact"
+  | "thesis"
+  | "administrative"
+  | "achievements"
+  | "newspaper";
 
 interface PageHeaderProps {
   title: string;
@@ -37,6 +45,10 @@ const iconMap = {
   publications: BookOpen,
   gallery: ImageIcon,
   contact: Mail,
+  thesis: Users,
+  administrative: ShieldCheck,
+  achievements: Award,
+  newspaper: Newspaper,
 };
 
 export function PageHeader({
